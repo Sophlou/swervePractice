@@ -27,7 +27,6 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
  */
 public class RobotContainer {
   public static final int L = 0;
-
   public static final int W = 0;
 
   // The robot's subsystems and commands are defined here...
@@ -44,6 +43,7 @@ public class RobotContainer {
   }
 
   public class swerveDrive {
+
 
     public void drive(double x1, double y1, double x2) {
       double r = Math.sqrt((L * L) + (W * W));
@@ -76,7 +76,7 @@ public class RobotContainer {
     public WheelDrive(int angleMotor, int speedMotor, int encoder) {
       this.angleMotor = new TalonSRX (angleMotor);
       this.speedMotor = new TalonSRX(speedMotor);
-      pidController = new PIDController (1, 0, 0, new AnalogInput (encoder), this.angleMotor);
+      pidController = new PIDController (1, 0, 0, new AnalogInput (encoder), (PIDOutput) this.angleMotor);
   
       pidController.setOutputRange (-1, 1);
       pidController.setContinuous ();
