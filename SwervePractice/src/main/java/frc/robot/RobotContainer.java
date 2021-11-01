@@ -8,6 +8,8 @@ package frc.robot;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import frc.robot.commands.ExampleCommand;
@@ -16,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import static frc.robot.Constants.*;
 import static java.lang.Math.*;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 /**
@@ -28,6 +31,13 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 public class RobotContainer {
   public static final int L = 0;
   public static final int W = 0;
+  public static final int MAX_VOLTS = 0;
+  private WheelDrive backRight = new WheelDrive(0, 1, 0);
+  private WheelDrive backLeft = new WheelDrive(2, 3, 1);
+  private WheelDrive frontRight = new WheelDrive(4, 5, 2);
+  private WheelDrive frontLeft = new WheelDrive(6, 7, 3);
+
+  private SwerveDrive swerveDrive = new SwerveDrive(backRight, backLeft, frontRight, frontLeft);
 
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
@@ -64,7 +74,17 @@ public class RobotContainer {
       double frontRightAngle = Math.atan2(b, d) / Math.PI;
       double frontLeftAngle = Math.atan2(b, c) / Math.PI;
     }
+    private WheelDrive backRight;
+private WheelDrive backLeft;
+private WheelDrive frontRight;
+private WheelDrive frontLeft;
 
+public SwerveDrive(WheelDrive backRight, WheelDrive backLeft, WheelDrive frontRight, WheelDrive frontLeft) {
+    this.backRight = backRight;
+    this.backLeft = backLeft;
+    this.frontRight = frontRight;
+    this.frontLeft = frontLeft;
+}
   }
 
   public class WheelDrive {
@@ -82,7 +102,24 @@ public class RobotContainer {
       pidController.setContinuous ();
       pidController.enable ();
     }
+    public void drive (double speed, double angle) {
+      speedMotor.set (ControlMode.PercentOutput, speed);
+  
+      double setpoint = angle * (MAX_VOLTS * 0.5) + (MAX_VOLTS * 0.5); // Optimization offset can be calculated here.
+      if (setpoint < 0) {
+          setpoint = MAX_VOLTS + setpoint;
+      }
+      if (setpoint > MAX_VOLTS) {
+          setpoint = setpoint - MAX_VOLTS;
+      }
+  
+      pidController.setSetpoint (setpoint);
   }
+
+  }
+  
+
+
   /**
    * Use this method to define your button->command mappings. Buttons can be created by
    * instantiating a {@link GenericHID} or one of its subclasses ({@link
