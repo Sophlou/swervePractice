@@ -7,6 +7,8 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.Jaguar;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
@@ -32,12 +34,14 @@ public class RobotContainer {
   public static final int L = 0;
   public static final int W = 0;
   public static final int MAX_VOLTS = 0;
-  private WheelDrive backRight = new WheelDrive(0, 1, 0);
-  private WheelDrive backLeft = new WheelDrive(2, 3, 1);
-  private WheelDrive frontRight = new WheelDrive(4, 5, 2);
-  private WheelDrive frontLeft = new WheelDrive(6, 7, 3);
 
-  private SwerveDrive swerveDrive = new SwerveDrive(backRight, backLeft, frontRight, frontLeft);
+  public Joystick joystick = new Joystick (0);
+  
+  public MK3Module backRight = new MK3Module(0, 1, 0);
+  public MK3Module backLeft = new MK3Module(2, 3, 1);
+  public MK3Module frontRight = new MK3Module(4, 5, 2);
+  public MK3Module frontLeft = new MK3Module(6, 7, 3);
+  public SwerveDrive swerveDrive = new SwerveDrive(backRight, backLeft, frontRight, frontLeft);
 
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
@@ -52,17 +56,28 @@ public class RobotContainer {
     configureButtonBindings();
   }
 
-  public class swerveDrive {
+  public class SwerveDrive {
 
+    private MK3Module backRight;
+    private MK3Module backLeft;
+    private MK3Module frontRight;
+    private MK3Module frontLeft;
 
-    public void drive(double x1, double y1, double x2) {
+    public SwerveDrive(MK3Module backRight, MK3Module backLeft, MK3Module frontRight, MK3Module frontLeft) {
+      this.backRight = backRight;
+      this.backLeft = backLeft;
+      this.frontRight = frontRight;
+      this.frontLeft = frontLeft;
+  }
+
+    public void drive(double x1, double y1, double r1) {
       double r = Math.sqrt((L * L) + (W * W));
       y1 *= -1;
 
-      double a = x1 - x2 * (L / r);
-      double b = x1 + x2 * (L / r);
-      double c = y1 - x2 * (W / r);
-      double d = y1 + x2 * (W / r);
+      double a = x1 - r1 * (L / r);
+      double b = x1 + r1 * (L / r);
+      double c = y1 - r1 * (W / r);
+      double d = y1 + r1 * (W / r);
 
       double backRightSpeed = Math.sqrt((a * a) + (d * d));
       double backLeftSpeed = Math.sqrt((a * a) + (c * c));
@@ -73,37 +88,32 @@ public class RobotContainer {
       double backLeftAngle = Math.atan2(a, c) / Math.PI;
       double frontRightAngle = Math.atan2(b, d) / Math.PI;
       double frontLeftAngle = Math.atan2(b, c) / Math.PI;
+
+      backRight.drive(backRightSpeed, backRightAngle);
+      backLeft.drive(backLeftSpeed, backLeftAngle);
+      frontRight.drive(frontRightSpeed, frontRightAngle);
+      frontLeft.drive(frontLeftSpeed, frontLeftAngle);
     }
-    private WheelDrive backRight;
-private WheelDrive backLeft;
-private WheelDrive frontRight;
-private WheelDrive frontLeft;
-
-public SwerveDrive(WheelDrive backRight, WheelDrive backLeft, WheelDrive frontRight, WheelDrive frontLeft) {
-    this.backRight = backRight;
-    this.backLeft = backLeft;
-    this.frontRight = frontRight;
-    this.frontLeft = frontLeft;
 }
-  }
 
-  public class WheelDrive {
+  public class MK3Module {
 
-    private TalonSRX angleMotor;
-    private TalonSRX speedMotor;
+    private Jaguar angleMotor;
+    private Jaguar speedMotor;
     private PIDController pidController;
 
-    public WheelDrive(int angleMotor, int speedMotor, int encoder) {
-      this.angleMotor = new TalonSRX (angleMotor);
-      this.speedMotor = new TalonSRX(speedMotor);
-      pidController = new PIDController (1, 0, 0, new AnalogInput (encoder), (PIDOutput) this.angleMotor);
+    public MK3Module(int angleMotorId, int speedMotorId, int encoderId) {
+      this.angleMotor = new Jaguar (angleMotorId);
+      this.speedMotor = new Jaguar(speedMotorId);
+      pidController = new PIDController (1, 0, 0, new AnalogInput (encoderId), (PIDOutput) this.angleMotor);
   
       pidController.setOutputRange (-1, 1);
       pidController.setContinuous ();
       pidController.enable ();
     }
+
     public void drive (double speed, double angle) {
-      speedMotor.set (ControlMode.PercentOutput, speed);
+      speedMotor.set(speed);
   
       double setpoint = angle * (MAX_VOLTS * 0.5) + (MAX_VOLTS * 0.5); // Optimization offset can be calculated here.
       if (setpoint < 0) {
@@ -114,7 +124,7 @@ public SwerveDrive(WheelDrive backRight, WheelDrive backLeft, WheelDrive frontRi
       }
   
       pidController.setSetpoint (setpoint);
-  }
+    }
 
   }
   
